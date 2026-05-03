@@ -1,0 +1,141 @@
+{
+  "info": {
+    "name": "Saga E-commerce Tests",
+    "description": "Test collection for Saga pattern e-commerce system",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "orderServiceUrl",
+      "value": "http://localhost:8001",
+      "type": "string"
+    },
+    {
+      "key": "inventoryServiceUrl",
+      "value": "http://localhost:8002",
+      "type": "string"
+    },
+    {
+      "key": "paymentServiceUrl",
+      "value": "http://localhost:8003",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "SUCCESS: Start Saga",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/saga/start",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"customerId\": \"CUST-001\",\n  \"items\": [\n    {\"productId\": \"PROD-001\", \"quantity\": 1, \"price\": 999.99}\n  ],\n  \"totalAmount\": 999.99\n}"
+        }
+      }
+    },
+    {
+      "name": "SUCCESS: Get Saga Status",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/saga/{{sagaId}}"
+      }
+    },
+    {
+      "name": "SUCCESS: Get Order",
+      "request": {
+        "method": "GET",
+        "url": "{{orderServiceUrl}}/orders/{{orderId}}"
+      }
+    },
+    {
+      "name": "SUCCESS: Get Inventory",
+      "request": {
+        "method": "GET",
+        "url": "{{inventoryServiceUrl}}/inventory/PROD-001"
+      }
+    },
+    {
+      "name": "SUCCESS: Get Payment",
+      "request": {
+        "method": "GET",
+        "url": "{{paymentServiceUrl}}/payment/{{orderId}}"
+      }
+    },
+    {
+      "name": "SUCCESS: Get All Inventory",
+      "request": {
+        "method": "GET",
+        "url": "{{inventoryServiceUrl}}/inventory"
+      }
+    },
+    {
+      "name": "FAILURE: Reserve Too Much Inventory",
+      "request": {
+        "method": "POST",
+        "url": "{{inventoryServiceUrl}}/inventory/reserve",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"orderId\": \"ORD-TEST-FAIL\",\n  \"items\": [\n    {\"productId\": \"PROD-001\", \"quantity\": 99999}\n  ]\n}"
+        }
+      }
+    },
+    {
+      "name": "ROLLBACK: Refund Payment",
+      "request": {
+        "method": "POST",
+        "url": "{{paymentServiceUrl}}/payment/refund",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"orderId\": \"ORD_xxx\"\n}"
+        }
+      }
+    },
+    {
+      "name": "ROLLBACK: Release Inventory",
+      "request": {
+        "method": "POST",
+        "url": "{{inventoryServiceUrl}}/inventory/release",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"orderId\": \"ORD_xxx\"\n}"
+        }
+      }
+    },
+    {
+      "name": "UTILITY: Health Check",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/saga/status"
+      }
+    }
+  ]
+}

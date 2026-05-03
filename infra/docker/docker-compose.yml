@@ -1,0 +1,86 @@
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: saga_db
+      MYSQL_USER: saga
+      MYSQL_PASSWORD: sagapass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - order-service
+      - inventory-service
+      - payment-service
+      - saga-orchestrator
+
+  order-service:
+    build: ../../services/order-service
+    ports:
+      - "8001:8001"
+    depends_on:
+      - mysql
+    environment:
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_NAME=saga_db
+      - DB_USER=saga
+      - DB_PASS=sagapass
+
+  inventory-service:
+    build: ../../services/inventory-service
+    ports:
+      - "8002:8002"
+    depends_on:
+      - mysql
+    environment:
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_NAME=saga_db
+      - DB_USER=saga
+      - DB_PASS=sagapass
+
+  payment-service:
+    build: ../../services/payment-service
+    ports:
+      - "8003:8003"
+    depends_on:
+      - mysql
+    environment:
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_NAME=saga_db
+      - DB_USER=saga
+      - DB_PASS=sagapass
+
+  saga-orchestrator:
+    build: ../../services/saga-orchestrator
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mysql
+      - order-service
+      - inventory-service
+      - payment-service
+    environment:
+      - ORDER_SERVICE_URL=http://order-service:8001
+      - INVENTORY_SERVICE_URL=http://inventory-service:8002
+      - PAYMENT_SERVICE_URL=http://payment-service:8003
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_NAME=saga_db
+      - DB_USER=saga
+      - DB_PASS=sagapass
+
+volumes:
+  mysql_data:
